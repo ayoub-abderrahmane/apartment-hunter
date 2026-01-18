@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Prédiction du prix d'un bien immobilier</title>
+
+    <!-- Lien vers le CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Bienvenue</h1>
+    <p>Application de prédiction du prix d’un bien immobilier</p>
+
+    <form action="/predictPrice" method="get">
+        <button type="submit">Prédire un prix</button>
+    </form>
+</div>
+
+</body>
+</html>

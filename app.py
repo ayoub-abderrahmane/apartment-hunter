@@ -1,53 +1,40 @@
-import pickle 
-import pandas as pd  
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error
+from flask import Flask, request, jsonify , render_template
+import pickle
+import pandas as pd
 
-df =  pd.read_csv("bdd/processed/madrid_nettoye.csv")
+app = Flask(__name__)
 
-#création d'une colonne pour le prix au m²
+with open("src/XGBoost.pkl", "rb") as f:
+    pipeline = pickle.load(f)
 
-df["price_m2"] = (
-    df['neighborhood_id']
-    .str.extract(r"\(([\d\.]+)\s*€/m2\)")
-    .astype(float)
-)
+@app.route('/')
+def home():
+    return render_template('index.html')
+@app.route("/predictPrice", methods=["GET", "POST"])
+def predictPrice():
+    prediction = None
 
-#suppréssion des outliers
-q1 = df["buy_price"].quantile(0.02)
-q99 = df["buy_price"].quantile(0.98)
-df = df[(df["buy_price"] >= q1) & (df["buy_price"] <= q99)]
+    if request.method == "POST":
+        data = {
+            "sq_mt_built": float(request.form["sq_mt_built"]),
+            "n_rooms": int(request.form["n_rooms"]),
+            "n_bathrooms": float(request.form["n_bathrooms"]),
+            "floor": request.form["floor"],
+            "is_floor_under": request.form.get("is_floor_under") == "on",
+            "house_type_id": request.form["house_type_id"],
+            "is_renewal_needed": request.form.get("is_renewal_needed") == "on",
+            "is_new_development": request.form.get("is_new_development") == "on",
+            "has_lift": request.form.get("has_lift") == "on",
+            "is_exterior": request.form.get("is_exterior") == "on",
+            "energy_certificate": request.form["energy_certificate"],
+            "has_parking": request.form.get("has_parking") == "on",
+            "price_m2": float(request.form["price_m2"]),
+        }
 
-X = df.drop(columns=["title","subtitle",'neighborhood_id',"buy_price","buy_price_by_area","is_buy_price_known","rent_price","is_rent_price_known",'is_exact_address_hidden'])
-X = X.dropna()
-y = df["buy_price"]
-y = y[X.index]  # garder les mêmes index
+        df = pd.DataFrame([data])
+        prediction = pipeline.predict(df)[0]
 
+    return render_template("predictPrice.html", prediction=prediction)
 
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
-)
-
-
-with open('src/XGBoost.pkl','rb') as f :
-   model = pickle.load(f)
-
-
-y_pred = model.predict(X_test)
-y_test_real = y_test  
-
- 
-
-mae = mean_absolute_error(y_test_real, y_pred)
-r2 = r2_score(y_test_real, y_pred)
-mape = mean_absolute_percentage_error(y_test_real, y_pred)
-
-print(f"XGB MAE  : {mae:,.0f} €")
-print(f"XGB R²   : {r2:.3f}")
-print(f"XGB MAPE : {mape*100:.2f} %")
-
-
+if __name__ == "__main__":
+    app.run(debug=True)
