@@ -13,6 +13,10 @@ COPY src/ src/
 # bdd qui contient les dataset
 COPY bdd/ bdd/ 
 
+COPY templates/ templates/
+COPY static/ static/
+
+
 # Installe les dépendances présentes dans le requirements.txt
 RUN pip install -r src/requirements.txt
 
