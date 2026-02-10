@@ -10,8 +10,8 @@ WORKDIR /app
 # Copie du dossier source qui contient requirement.txt et le pickle 
 COPY src/ src/ 
 
-# bdd qui contient les dataset
-COPY bdd/ bdd/ 
+# data qui contient les dataset
+COPY data/processed data/ 
 
 COPY templates/ templates/
 COPY static/ static/
